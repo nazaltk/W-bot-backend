@@ -12,6 +12,9 @@
     "whatsapp-api",
     "node.js"
   ],
+  "engines": {
+    "node": "12.x"
+  },
   "author": "Nur Muhammad",
   "license": "MIT",
   "dependencies": {
