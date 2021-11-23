@@ -1,26 +1,55 @@
-# Hello Node (blank)
+# Whatsapp API Tutorial
 
-[Node.js](https://nodejs.org/en/about/) is a popular runtime that lets you run JavaScript on the server. This project uses the [Fastify](https://www.fastify.io/) framework and basic templating with [Handlebars](https://handlebarsjs.com/).
+Hi, this is the implementation example of <a href="https://github.com/pedroslopez/whatsapp-web.js">whatsapp-web.js</a>
 
-## What's in this project?
+Watch the tutorials:
 
-← `README.md`: That’s this file, where you can tell people what your cool website does and how you built it.
+- <a href="https://youtu.be/IRRiN2ZQDc8">Whatsapp API Tutorial: Part 1</a>
+- <a href="https://youtu.be/hYpRQ_FE1JI">Whatsapp API Tutorial: Part 2</a>
+- <a href="https://youtu.be/uBu7Zfba1zA">Whatsapp API Tutorial: Tips & Tricks</a>
+- <a href="https://youtu.be/ksVBXF-6Jtc">Whatsapp API Tutorial: Sending Media File</a>
+- <a href="https://youtu.be/uSzjbuaHexk">Whatsapp API Tutorial: Deploy to Heroku</a>
+- <a href="https://youtu.be/5VfM9PvrYcE">Whatsapp API Tutorial: Multiple Device</a>
+- <a href="https://youtu.be/Cq8ru8iKAVk">Whatsapp API Tutorial: Multiple Device | Part 2</a>
+- <a href="https://youtu.be/bgxxUWqW6WU">Whatsapp API Tutorial: Fix Heroku Session</a>
+- <a href="https://youtu.be/iode8kstDYQ">Whatsapp API Tutorial: Dynamic Message Reply</a>
 
-← `public/style.css`: The styling rules for your pages and posts.
+### How to use?
 
-← `server.js`: The main server script for your new site.
+- Clone or download this repo
+- Enter to the project directory
+- Run `npm install`
+- Run `npm run start:dev`
+- Open browser and go to address `http://localhost:8000`
+- Scan the QR Code
+- Enjoy!
 
-← `src/`: This folder holds page templates, additional scripts.
+### Send message to group
 
-### Working in the `src/` folder 📁
+You can send the message to any group by using `chatID` or group `name`, chatID will used if you specify the `id` field in the form, so if you want to send by `name`, only use name.
 
-← `src/pages/index.hbs`: This is the main page template for your site.
+**Paramaters:**
 
-![Glitch](https://cdn.glitch.com/a9975ea6-8949-4bab-addb-8a95021dc2da%2FLogo_Color.svg?v=1602781328576)
+- `id` (optional if name given): the chat ID
+- `name` (optional): group name
+- `message`: the message
 
-## You built this with Glitch!
+Here the endpoint: `/send-group-message`
 
-[Glitch](https://glitch.com) is a friendly community where millions of people come together to build web apps and websites.
+Here the way to get the groups info (including ID & name):
 
-- Need more help? [Check out our Help Center](https://help.glitch.com/) for answers to any common questions.
-- Ready to make it official? [Become a paid Glitch member](https://glitch.com/pricing) to boost your app with private sharing, more storage and memory, domains and more.
+- Send a message to the API number `!groups`
+- The API will replying with the groups info
+- Use the ID to send a message
+
+### Downloading media
+
+I add an example to downloading the message media if exists. Please check it in `on message` event!
+
+We use `mime-types` package to get the file extension by it's mimetype, so we can download all of the type of media message.
+
+And we decided (for this example) to use time as the filename, because the media filename is not certain exists.
+
+## Support Me
+
+You can make a support for this work by <a href="https://karyakarsa.com/ngekoding/">Karya Karsa</a>. Thanks
