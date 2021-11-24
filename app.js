@@ -231,6 +231,7 @@ app.post('/send-media', async (req, res) => {
   const number = phoneNumberFormatter(req.body.number);
   const caption = req.body.caption;
   const fileUrl = req.body.file;
+  const isAudio = req.body.audio;
 
   // const media = MessageMedia.fromFilePath('./image-example.png');
   // const file = req.files.file;
@@ -246,7 +247,8 @@ app.post('/send-media', async (req, res) => {
   const media = new MessageMedia(mimetype, attachment, 'Media');
 
   client.sendMessage(number, media, {
-    caption: caption
+    caption: caption,
+    sendAudioAsVoice : isAudio
   }).then(response => {
     res.status(200).json({
       status: true,
