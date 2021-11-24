@@ -46,7 +46,7 @@ const setSessionsFile = function(sessions) {
     }
   });
 }
-
+ 
 const getSessionsFile = function() {
   return JSON.parse(fs.readFileSync(SESSIONS_FILE));
 }

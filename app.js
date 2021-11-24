@@ -10,7 +10,7 @@ const fileUpload = require('express-fileupload');
 const axios = require('axios');
 const mime = require('mime-types');
 
-const TEMPLATE_URL = 'https://nazal.in/w-bot-api/Nazal_Template.json';
+const TEMPLATE_URL = 'https://nazal.in/w-bot-api/Template_Skygold.json';
 const port = process.env.PORT || 8000;
 
 const app = express();
