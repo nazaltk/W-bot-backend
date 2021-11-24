@@ -25,6 +25,7 @@
 			<div class="col-md-6 qrCodeSection">
 				<br/><br/><br/>
 				<img src="" alt="QR Code" id="qrcode">
+				<img src="images/connected.jpg" alt="Connected" id="connected">
 			</div>
 			<div class="col-md-6">
 				<h3>Logs:</h3>
@@ -49,12 +50,16 @@
 			text-align: right;
 			color: #fff;
 		}
+		body {
+			background-color: #f8f9fb;
+		}
 	</style>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js" crossorigin="anonymous"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js" crossorigin="anonymous"></script>
 	<script>
 		$(document).ready(function() {
 			var socket = io();
+			$('#connected').hide();
 
 			socket.on('message', function(msg) {
 				$('.logs').append($('<li>').text(msg));
@@ -63,14 +68,17 @@
 			socket.on('qr', function(src) {
 				$('#qrcode').attr('src', src);
 				$('#qrcode').show();
+				$('#connected').hide();
 			});
 
 			socket.on('ready', function(data) {
 				$('#qrcode').hide();
+				$('#connected').show();
 			});
 
 			socket.on('authenticated', function(data) {
 				$('#qrcode').hide();
+				$('#connected').show();
 			});
 		});
 	</script>

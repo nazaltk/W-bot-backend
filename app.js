@@ -10,13 +10,14 @@ const fileUpload = require('express-fileupload');
 const axios = require('axios');
 const mime = require('mime-types');
 
-const TEMPLATE_URL = process.env.TEMPLATE_URL;
+const TEMPLATE_URL = 'https://nazal.in/w-bot-api/Nazal_Template.json';
 const port = process.env.PORT || 8000;
 
 const app = express();
 const server = http.createServer(app);
 const io = socketIO(server);
 
+app.use(express.static('public'));
 app.use(express.json());
 app.use(express.urlencoded({
   extended: true
@@ -100,7 +101,7 @@ client.on('message', async (msg) => {
           caption: message[i].caption
         });
       }      
-    }
+    }  
   }
 });
 
@@ -110,7 +111,6 @@ const getTemplateData = async function(msg) {
   return response.data;
 }
 
-console.log("TEMPLATE_URL: " + TEMPLATE_URL)
 client.initialize();
 
 // Socket IO
