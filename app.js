@@ -101,6 +101,24 @@ client.on('message', async (msg) => {
           caption: message[i].caption
         });
       }      
+    }  else if(templateDataItem.type === 'Audio'){
+      var message = templateDataItem.message;
+      for(var i = 0; i < message.length; i++){
+        let mimetype;
+        const attachment = await axios.get(message[i].fileUrl, {
+          responseType: 'arraybuffer'
+        }).then(response => {
+          mimetype = response.headers['content-type'];
+          return response.data.toString('base64');
+        });  
+
+        const media = new MessageMedia(mimetype, attachment, 'Media');
+
+        client.sendMessage(msg.from, media, {
+          caption: message[i].caption,
+          sendAudioAsVoice : true
+        });
+      }      
     }  
   }
 });
