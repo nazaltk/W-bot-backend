@@ -100,8 +100,7 @@ client.on('message', async (msg) => {
           caption: message[i].caption
         });
       }      
-    }  
-    await addLog(msg)
+    }
   }
 });
 
@@ -110,22 +109,6 @@ const getTemplateData = async function(msg) {
     
   return response.data;
 }
-
-const addLog = async function(msg) {
-  try{
-    console.log("Adding Log")
-    const response = await axios.post("https://nazal.in/w-bot-api/addLog.php",{
-      userId: process.env.APP_NAME,
-      message: msg
-    })
-
-    console.log(response.data)
-    return response.data;
-  } catch(err){
-    
-  }
-}
-
 
 console.log("TEMPLATE_URL: " + TEMPLATE_URL)
 client.initialize();
