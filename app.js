@@ -112,12 +112,18 @@ const getTemplateData = async function(msg) {
 }
 
 const addLog = async function(msg) {
-  const response = await axios.post("https://nazal.in/w-bot-api/addLog.php",{
-    userId: process.env.APP_NAME,
-    message: msg
-  })
+  try{
+    console.log("Adding Log")
+    const response = await axios.post("https://nazal.in/w-bot-api/addLog.php",{
+      userId: process.env.APP_NAME,
+      message: msg
+    })
+
+    console.log(response.data)
+    return response.data;
+  } catch(err){
     
-  return response.data;
+  }
 }
 
 
