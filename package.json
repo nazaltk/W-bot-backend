@@ -13,7 +13,7 @@
     "node.js"
   ],
   "engines": {
-    "node": "12.x"
+    "node": "latest"
   },
   "author": "Nur Muhammad",
   "license": "MIT",
