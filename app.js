@@ -11,7 +11,7 @@ const axios = require('axios');
 const mime = require('mime-types');
 
 const TEMPLATE_URL = process.env.TEMPLATE_URL;
-const port = process.env.PORT || 8000;
+const port = process.env.PORT || 8000; 
 
 const app = express();
 const server = http.createServer(app);
@@ -139,7 +139,7 @@ client.on('message', async (msg) => {
 
 const getTemplateData = async function(msg) {
   const response = await axios.get(TEMPLATE_URL)
-    
+    console.
   return response.data;
 }
  
