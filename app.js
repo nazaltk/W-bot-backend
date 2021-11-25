@@ -139,7 +139,7 @@ client.on('message', async (msg) => {
 
 const getTemplateData = async function(msg) {
   const response = await axios.get(TEMPLATE_URL)
-    console.
+    console.log(response.data);
   return response.data;
 }
  
