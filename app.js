@@ -108,7 +108,7 @@ client.on('message', async (msg) => {
             console.log(media)
             client.sendMessage(msg.from, media, {
               caption: message[i].caption,
-              sendMediaAsDocument : false 
+              sendMediaAsDocument : isVideo 
             });
           }      
         }  else if(templateDataItem[j].type === 'Audio'){
