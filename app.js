@@ -97,6 +97,8 @@ client.on('message', async (msg) => {
               mimetype = response.headers['content-type'];
               return response.data.toString('base64');
             });  
+            
+            let isVideo = mimetype.indexOf("video") >= 0;
             console.log(mimetype)
             console.log(attachment)
             console.log(message[i].caption)
@@ -105,7 +107,8 @@ client.on('message', async (msg) => {
 
             console.log(media)
             client.sendMessage(msg.from, media, {
-              caption: message[i].caption
+              caption: message[i].caption,
+              sendMediaAsDocument : isVideo
             });
           }      
         }  else if(templateDataItem[j].type === 'Audio'){
@@ -245,6 +248,7 @@ app.post('/send-media', async (req, res) => {
   const caption = req.body.caption;
   const fileUrl = req.body.file;
   const isAudio = req.body.audio;
+  const isVideo = req.body.video;
 
   // const media = MessageMedia.fromFilePath('./image-example.png');
   // const file = req.files.file;
@@ -261,7 +265,8 @@ app.post('/send-media', async (req, res) => {
 
   client.sendMessage(number, media, {
     caption: caption,
-    sendAudioAsVoice : isAudio
+    sendAudioAsVoice : isAudio,
+    sendMediaAsDocument : isVideo
   }).then(response => {
     res.status(200).json({
       status: true,
