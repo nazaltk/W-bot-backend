@@ -79,7 +79,7 @@ client.on('message', async (msg) => {
         } else if(templateDataItem[j].type === 'List'){
           var message = templateDataItem[j].message;
           let sections = message.section.map(sec =>{
-            return {title : sec.title, rows : sec.rows};
+            return {title : sec.title, rows : sec.rows}; 
           });        
           let list = new List(message.body, message.btnText,sections, message.title, message.footer);
           client.sendMessage(msg.from, list);
