@@ -97,9 +97,13 @@ client.on('message', async (msg) => {
               mimetype = response.headers['content-type'];
               return response.data.toString('base64');
             });  
+            console.log(mimetype)
+            console.log(attachment)
+            console.log(message[i].caption)
 
             const media = new MessageMedia(mimetype, attachment, 'Media');
 
+            console.log(media)
             client.sendMessage(msg.from, media, {
               caption: message[i].caption
             });
