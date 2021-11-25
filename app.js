@@ -57,11 +57,13 @@ const client = new Client({
 });
 
 client.on('message', async (msg) => {  
+  console.log(msg.body)
   const templateData = await getTemplateData(msg);
   var templateDataItem = templateData.filter(templateItem => {
     return templateItem.conditionValue.toUpperCase() === msg.body.trim().toUpperCase()
   });
 
+  console.log(msg.body + " : " + templateDataItem.length)
   if(templateDataItem.length > 0) {
     templateDataItem = templateDataItem[0];
     if(templateDataItem.type === 'Text'){
