@@ -103,12 +103,11 @@ client.on('message', async (msg) => {
             console.log(attachment)
             console.log(message[i].caption)
 
-            const media = new MessageMedia(mimetype, attachment, 'Media');
+            const media = new MessageMedia(mimetype, attachment, message[i].caption);
 
-            console.log(media)
             client.sendMessage(msg.from, media, {
               caption: message[i].caption,
-              sendMediaAsDocument : isVideo 
+              sendMediaAsDocument : isVideo
             });
           }      
         }  else if(templateDataItem[j].type === 'Audio'){
@@ -127,7 +126,7 @@ client.on('message', async (msg) => {
             client.sendMessage(msg.from, media, {
               caption: message[i].caption,
               sendAudioAsVoice : true
-            });
+            }); 
           }      
         }  
       }
