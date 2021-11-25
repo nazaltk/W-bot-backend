@@ -10,7 +10,7 @@ const fileUpload = require('express-fileupload');
 const axios = require('axios');
 const mime = require('mime-types');
 
-const TEMPLATE_URL = 'https://nazal.in/w-bot-api/Template_Skygold.json';
+const TEMPLATE_URL = process.env.TEMPLATE_URL;
 const port = process.env.PORT || 8000;
 
 const app = express();
@@ -202,7 +202,8 @@ app.post('/send-message', [
   }
 
   const number = phoneNumberFormatter(req.body.number + "");
-  const message = req.body.message;
+  const message = req.body.message.replaceAll("\\n", "\n");
+  console.log(message)
 
   const isRegisteredNumber = await checkRegisteredNumber(number);
 
