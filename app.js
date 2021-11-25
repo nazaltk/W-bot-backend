@@ -128,7 +128,7 @@ const getTemplateData = async function(msg) {
     
   return response.data;
 }
-
+ 
 client.initialize();
 
 // Socket IO
