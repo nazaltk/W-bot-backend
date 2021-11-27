@@ -11,7 +11,7 @@ const axios = require('axios');
 const mime = require('mime-types');
 
 const TEMPLATE_URL = process.env.TEMPLATE_URL;
-const port = process.env.PORT || 8000; 
+const port = process.env.PORT || 8000;
 
 const app = express();
 const server = http.createServer(app);
@@ -79,7 +79,7 @@ client.on('message', async (msg) => {
         } else if(templateDataItem[j].type === 'List'){
           var message = templateDataItem[j].message;
           let sections = message.section.map(sec =>{
-            return {title : sec.title, rows : sec.rows}; 
+            return {title : sec.title, rows : sec.rows};
           });        
           let list = new List(message.body, message.btnText,sections, message.title, message.footer);
           client.sendMessage(msg.from, list);
@@ -139,7 +139,7 @@ client.on('message', async (msg) => {
 
 const getTemplateData = async function(msg) {
   const response = await axios.get(TEMPLATE_URL)
-    console.log(response.data);
+    
   return response.data;
 }
  
@@ -200,8 +200,7 @@ app.post('/send-message', [
   body('number').notEmpty(),
   body('message').notEmpty(),
 ], async (req, res) => {
-  console.log("Request Body")
-  console.log(req.body)
+  
   const errors = validationResult(req).formatWith(({
     msg
   }) => {
@@ -222,7 +221,7 @@ app.post('/send-message', [
   const isRegisteredNumber = await checkRegisteredNumber(number);
 
   if (!isRegisteredNumber) {
-    return res.status(422).json({
+    return res.status(200).json({
       status: false,
       message: 'The number is not registered'
     });
@@ -234,7 +233,7 @@ app.post('/send-message', [
       response: response
     });
   }).catch(err => {
-    res.status(500).json({
+    res.status(200).json({
       status: false,
       response: err
     });
@@ -272,7 +271,7 @@ app.post('/send-media', async (req, res) => {
       response: response
     });
   }).catch(err => {
-    res.status(500).json({
+    res.status(200).json({
       status: false,
       response: err
     });
