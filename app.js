@@ -17,6 +17,8 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIO(server);
 
+io.setMaxListeners(0)
+
 app.use(express.static('public'));
 app.use(express.json());
 app.use(express.urlencoded({
@@ -63,6 +65,12 @@ client.on('message', async (msg) => {
     var templateDataItem = templateData.filter(templateItem => {
       return templateItem.conditionValue.toUpperCase() === msg.body.trim().toUpperCase()
     });
+
+    if(templateDataItem.length == 0){
+      templateDataItem = templateData.filter(templateItem => {
+        return templateItem.conditionValue.toUpperCase() === "***"
+      });
+    }
 
     console.log(msg.body + " : " + templateDataItem.length)
     if(templateDataItem.length > 0) {
@@ -286,6 +294,14 @@ const findGroupByName = async function(name) {
   });
   return group;
 }
+
+// Send message to group
+// You can use chatID or group name, yea!
+app.get('/status', async (req, res) => {
+  return res.status(200).json({
+    status: true
+  });
+});
 
 // Send message to group
 // You can use chatID or group name, yea!
