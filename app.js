@@ -58,7 +58,7 @@ const client = new Client({
   session: sessionCfg
 });
 client.setMaxListeners(0) 
-
+ 
 client.on('message', async (msg) => {  
   try{
     if(msg.type == 'chat' || msg.type == 'buttons_response'){
