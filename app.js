@@ -9,7 +9,6 @@ const { phoneNumberFormatter } = require('./helpers/formatter');
 const fileUpload = require('express-fileupload');
 const axios = require('axios');
 const mime = require('mime-types');
-
 const TEMPLATE_URL = process.env.TEMPLATE_URL;
 const port = process.env.PORT || 8000;
 
@@ -108,9 +107,6 @@ client.on('message', async (msg) => {
             });  
             
             let isVideo = mimetype.indexOf("video") >= 0;
-            console.log(mimetype)
-            console.log(attachment)
-            console.log(message[i].caption)
 
             const media = new MessageMedia(mimetype, attachment, message[i].caption);
 
