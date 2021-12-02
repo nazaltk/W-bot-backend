@@ -60,6 +60,7 @@ const client = new Client({
 
 client.on('message', async (msg) => {  
   try{
+    console.log(msg)
     console.log(msg.body)
     const templateData = await getTemplateData(msg);
     var templateDataItem = templateData.filter(templateItem => {
