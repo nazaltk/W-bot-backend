@@ -9,6 +9,7 @@ const { phoneNumberFormatter } = require('./helpers/formatter');
 const fileUpload = require('express-fileupload');
 const axios = require('axios');
 const mime = require('mime-types');
+
 const TEMPLATE_URL = process.env.TEMPLATE_URL;
 const port = process.env.PORT || 8000;
 
@@ -56,85 +57,90 @@ const client = new Client({
   },
   session: sessionCfg
 });
+client.setMaxListeners(0) 
 
 client.on('message', async (msg) => {  
   try{
-    console.log(msg)
-    console.log(msg.body)
-    const templateData = await getTemplateData(msg);
-    var templateDataItem = templateData.filter(templateItem => {
-      return templateItem.conditionValue.toUpperCase() === msg.body.trim().toUpperCase()
-    });
-
-    if(templateDataItem.length == 0){
-      templateDataItem = templateData.filter(templateItem => {
-        return templateItem.conditionValue.toUpperCase() === "***"
+    if(msg.type == 'chat' || msg.type == 'buttons_response'){
+      console.log(msg.body)
+      const templateData = await getTemplateData(msg);
+      var templateDataItem = templateData.filter(templateItem => {
+        return templateItem.conditionValue.toUpperCase() === msg.body.trim().toUpperCase()
       });
-    }
 
-    console.log(msg.body + " : " + templateDataItem.length)
-    if(templateDataItem.length > 0) {
-      for(var j = 0; j < templateDataItem.length; j++){
-        if(templateDataItem[j].type === 'Text'){
-          client.sendMessage(msg.from, templateDataItem[j].message);
-        } else if(templateDataItem[j].type === 'Button'){
-          var message = templateDataItem[j].message;
-          var buttons = message.buttons.map(button =>{
-            return {body : button}
-          }) 
-          let button = new Buttons(message.body, buttons, message.title, message.footer);
-          client.sendMessage(msg.from, button);
-        } else if(templateDataItem[j].type === 'List'){
-          var message = templateDataItem[j].message;
-          let sections = message.section.map(sec =>{
-            return {title : sec.title, rows : sec.rows};
-          });        
-          let list = new List(message.body, message.btnText,sections, message.title, message.footer);
-          client.sendMessage(msg.from, list);
-        } else if(templateDataItem[j].type === 'Location'){
-          var message = templateDataItem[j].message;
-          var location = new Location(message.lat, message.long, message.title);      
-          client.sendMessage(msg.from, location);
-        } else if(templateDataItem[j].type === 'File'){
-          var message = templateDataItem[j].message;
-          for(var i = 0; i < message.length; i++){
-            let mimetype; 
-            const attachment = await axios.get(message[i].fileUrl, {
-              responseType: 'arraybuffer'
-            }).then(response => {
-              mimetype = response.headers['content-type'];
-              return response.data.toString('base64');
-            });  
-            
-            let isVideo = mimetype.indexOf("video") >= 0;
-
-            const media = new MessageMedia(mimetype, attachment, message[i].caption);
-
-            client.sendMessage(msg.from, media, {
-              caption: message[i].caption,
-              sendMediaAsDocument : isVideo
-            });
-          }      
-        }  else if(templateDataItem[j].type === 'Audio'){
-          var message = templateDataItem[j].message;
-          for(var i = 0; i < message.length; i++){
-            let mimetype;
-            const attachment = await axios.get(message[i].fileUrl, {
-              responseType: 'arraybuffer'
-            }).then(response => {
-              mimetype = response.headers['content-type'];
-              return response.data.toString('base64');
-            });  
-
-            const media = new MessageMedia(mimetype, attachment, 'Media');
-
-            client.sendMessage(msg.from, media, {
-              caption: message[i].caption,
-              sendAudioAsVoice : true
-            }); 
-          }      
-        }  
+      if(templateDataItem.length == 0){
+        templateDataItem = templateData.filter(templateItem => {
+          return templateItem.conditionValue.toUpperCase() === "***"
+        });
       }
+
+      console.log(msg.body + " : " + templateDataItem.length)
+      if(templateDataItem.length > 0) {
+        for(var j = 0; j < templateDataItem.length; j++){
+          if(templateDataItem[j].type === 'Text'){
+            client.sendMessage(msg.from, templateDataItem[j].message);
+          } else if(templateDataItem[j].type === 'Button'){
+            var message = templateDataItem[j].message;
+            var buttons = message.buttons.map(button =>{
+              return {body : button}
+            }) 
+            let button = new Buttons(message.body, buttons, message.title, message.footer);
+            client.sendMessage(msg.from, button);
+          } else if(templateDataItem[j].type === 'List'){
+            var message = templateDataItem[j].message;
+            let sections = message.section.map(sec =>{
+              return {title : sec.title, rows : sec.rows};
+            });        
+            let list = new List(message.body, message.btnText,sections, message.title, message.footer);
+            client.sendMessage(msg.from, list);
+          } else if(templateDataItem[j].type === 'Location'){
+            var message = templateDataItem[j].message;
+            var location = new Location(message.lat, message.long, message.title);      
+            client.sendMessage(msg.from, location);
+          } else if(templateDataItem[j].type === 'File'){
+            var message = templateDataItem[j].message;
+            for(var i = 0; i < message.length; i++){
+              let mimetype; 
+              const attachment = await axios.get(message[i].fileUrl, {
+                responseType: 'arraybuffer'
+              }).then(response => {
+                mimetype = response.headers['content-type'];
+                return response.data.toString('base64');
+              });  
+              
+              let isVideo = mimetype.indexOf("video") >= 0;
+              console.log(mimetype)
+              console.log(attachment)
+              console.log(message[i].caption)
+
+              const media = new MessageMedia(mimetype, attachment, message[i].caption);
+
+              client.sendMessage(msg.from, media, {
+                caption: message[i].caption,
+                sendMediaAsDocument : isVideo
+              });
+            }      
+          }  else if(templateDataItem[j].type === 'Audio'){
+            var message = templateDataItem[j].message;
+            for(var i = 0; i < message.length; i++){
+              let mimetype;
+              const attachment = await axios.get(message[i].fileUrl, {
+                responseType: 'arraybuffer'
+              }).then(response => {
+                mimetype = response.headers['content-type'];
+                return response.data.toString('base64');
+              });  
+
+              const media = new MessageMedia(mimetype, attachment, 'Media');
+
+              client.sendMessage(msg.from, media, {
+                caption: message[i].caption,
+                sendAudioAsVoice : true
+              }); 
+            }      
+          }  
+        }
+      }      
     }
   } catch(err){
     console.log("Exception Occured")
