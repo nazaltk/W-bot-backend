@@ -253,6 +253,7 @@ app.post('/send-message', [
 
 // Send media
 app.post('/send-media', async (req, res) => {
+  console.log(req.body)
   const number = phoneNumberFormatter(req.body.number);
   const caption = req.body.caption;
   const fileUrl = req.body.file;
