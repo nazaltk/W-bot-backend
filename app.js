@@ -9,14 +9,14 @@ const { phoneNumberFormatter } = require('./helpers/formatter');
 const fileUpload = require('express-fileupload');
 const axios = require('axios');
 const mime = require('mime-types');
- 
+
 const TEMPLATE_URL = process.env.TEMPLATE_URL;
 const port = process.env.PORT || 8000;
 
 const app = express();
 const server = http.createServer(app);
 const io = socketIO(server);
- 
+
 io.setMaxListeners(0)
 
 app.use(express.static('public'));
@@ -58,7 +58,7 @@ const client = new Client({
   session: sessionCfg
 });
 client.setMaxListeners(0) 
- 
+
 client.on('message', async (msg) => {  
   try{
     if(msg.type == 'chat' || msg.type == 'buttons_response'){
@@ -211,7 +211,13 @@ app.post('/send-message', [
   body('number').notEmpty(),
   body('message').notEmpty(),
 ], async (req, res) => {
-  
+  console.log(req.body)
+  if(!req.body.number || !req.body.message){
+    return res.status(200).json({
+      status: false,
+      message: 'Invalid Input'
+    });
+  }
   const errors = validationResult(req).formatWith(({
     msg
   }) => {
@@ -254,7 +260,14 @@ app.post('/send-message', [
 // Send media
 app.post('/send-media', async (req, res) => {
   console.log(req.body)
-  const number = phoneNumberFormatter(req.body.number);
+  if(!req.body.number || !req.body.caption || !req.body.file|| !req.body.file){
+    return res.status(200).json({
+      status: false,
+      message: 'Invalid Input'
+    });
+  }
+
+  const number = phoneNumberFormatter(req.body.number + "");
   const caption = req.body.caption;
   const fileUrl = req.body.file;
   const isAudio = req.body.audio;
