@@ -153,8 +153,19 @@ const getTemplateData = async function(msg) {
     
   return response.data;
 }
- 
-client.initialize();
+
+initialize();
+
+const initialize = async function() {
+  var status = false;
+  while(!status){
+    await client.initialize().then(ss =>{
+      status = true;
+    }).catch( err =>{
+     console.log(err); 
+    });
+  }
+}
 
 // Socket IO
 io.on('connection', function(socket) {
