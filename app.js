@@ -190,17 +190,12 @@ const getTemplateData = async function(msg) {
   return response.data;
 };
 
-status = false;
-while (!status) {
-  client
-    .initialize()
-    .then(ss => {
-      status = true;
-    })
-    .catch(err => {
-      console.log(err);
-    });
-} 
+client
+  .initialize()
+  .then(ss => {})
+  .catch(err => {
+    console.log(err);
+  });
 
 // Socket IO
 io.on("connection", function(socket) {
