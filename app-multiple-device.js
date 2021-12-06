@@ -1,4 +1,8 @@
-const { Client, MessageMedia } = require('whatsapp-web.js');
+const { Client,
+  MessageMedia,
+  Buttons,
+  List,
+  Location } = require('whatsapp-web.js');
 const express = require('express');
 const socketIO = require('socket.io');
 const qrcode = require('qrcode');
@@ -40,6 +44,8 @@ const createSessionsFileIfNotExists = function() {
 createSessionsFileIfNotExists();
 
 const setSessionsFile = function(sessions) {
+  console.log("sessions")
+  console.log(sessions);
   fs.writeFile(SESSIONS_FILE, JSON.stringify(sessions), function(err) {
     if (err) {
       console.log(err);
@@ -51,8 +57,8 @@ const getSessionsFile = function() {
   return JSON.parse(fs.readFileSync(SESSIONS_FILE));
 }
 
-const createSession = function(id, description) {
-  console.log('Creating session: ' + id);
+const createSession = function(id, templateUrl) {
+  console.log('Creating session: ' + id + ' ' + templateUrl);
   const SESSION_FILE_PATH = `./whatsapp-session-${id}.json`;
   let sessionCfg;
   if (fs.existsSync(SESSION_FILE_PATH)) {
@@ -108,6 +114,127 @@ const createSession = function(id, description) {
     });
   });
 
+  client.on("message", async msg => {
+    try {
+      console.log(msg.type);
+      if (msg.type == "chat" || msg.type == "buttons_response" || msg.type == "list_response") {
+        console.log(msg.body);
+        const savedSessions = getSessionsFile();
+        console.log(savedSessions);
+        const sessionIndex = savedSessions.findIndex(sess => sess.id == id);
+        console.log(sessionIndex);
+        console.log(savedSessions[0]['templateUrl']);
+        const templateData = await getTemplateData(savedSessions[0]['templateUrl']);
+        var templateDataItem = templateData.filter(templateItem => {
+          return (
+            templateItem.conditionValue.toUpperCase() ===
+            msg.body.trim().toUpperCase()
+          );
+        });
+  
+        if (templateDataItem.length == 0) {
+          templateDataItem = templateData.filter(templateItem => {
+            return templateItem.conditionValue.toUpperCase() === "***";
+          });
+        }
+  
+        console.log(msg.body + " : " + templateDataItem.length);
+        if (templateDataItem.length > 0) {
+          for (var j = 0; j < templateDataItem.length; j++) {
+            if (templateDataItem[j].type === "Text") {
+              client.sendMessage(msg.from, templateDataItem[j].message);
+            } else if (templateDataItem[j].type === "Button") {
+              var message = templateDataItem[j].message;
+              var buttons = message.buttons.map(button => {
+                return { body: button };
+              });
+              let button = new Buttons(
+                message.body,
+                buttons,
+                message.title,
+                message.footer
+              );
+              client.sendMessage(msg.from, button);
+            } else if (templateDataItem[j].type === "List") {
+              var message = templateDataItem[j].message;
+              let sections = message.section.map(sec => {
+                return { title: sec.title, rows: sec.rows };
+              });
+              let list = new List(
+                message.body,
+                message.btnText,
+                sections,
+                message.title,
+                message.footer
+              );
+              client.sendMessage(msg.from, list);
+            } else if (templateDataItem[j].type === "Location") {
+              var message = templateDataItem[j].message;
+              var location = new Location(
+                message.lat,
+                message.long,
+                message.title
+              );
+              client.sendMessage(msg.from, location);
+            } else if (templateDataItem[j].type === "File") {
+              var message = templateDataItem[j].message;
+              for (var i = 0; i < message.length; i++) {
+                let mimetype;
+                const attachment = await axios
+                  .get(message[i].fileUrl, {
+                    responseType: "arraybuffer"
+                  })
+                  .then(response => {
+                    mimetype = response.headers["content-type"];
+                    return response.data.toString("base64");
+                  });
+  
+                let isVideo = mimetype.indexOf("video") >= 0;
+                console.log(mimetype);
+                console.log(attachment);
+                console.log(message[i].caption);
+  
+                const media = new MessageMedia(
+                  mimetype,
+                  attachment,
+                  message[i].caption
+                );
+  
+                client.sendMessage(msg.from, media, {
+                  caption: message[i].caption,
+                  sendMediaAsDocument: isVideo
+                });
+              }
+            } else if (templateDataItem[j].type === "Audio") {
+              var message = templateDataItem[j].message;
+              for (var i = 0; i < message.length; i++) {
+                let mimetype;
+                const attachment = await axios
+                  .get(message[i].fileUrl, {
+                    responseType: "arraybuffer"
+                  })
+                  .then(response => {
+                    mimetype = response.headers["content-type"];
+                    return response.data.toString("base64");
+                  });
+  
+                const media = new MessageMedia(mimetype, attachment, "Media");
+  
+                client.sendMessage(msg.from, media, {
+                  caption: message[i].caption,
+                  sendAudioAsVoice: true
+                });
+              }
+            }
+          }
+        }
+      }
+    } catch (err) {
+      console.log("Exception Occured");
+      console.log(err);
+    }
+  });
+
   client.on('auth_failure', function(session) {
     io.emit('message', { id: id, text: 'Auth failure, restarting...' });
   });
@@ -133,7 +260,7 @@ const createSession = function(id, description) {
   // Tambahkan client ke sessions
   sessions.push({
     id: id,
-    description: description,
+    templateUrl: templateUrl,
     client: client
   });
 
@@ -144,12 +271,19 @@ const createSession = function(id, description) {
   if (sessionIndex == -1) {
     savedSessions.push({
       id: id,
-      description: description,
+      templateUrl: templateUrl,
       ready: false,
     });
     setSessionsFile(savedSessions);
   }
 }
+
+  
+const getTemplateData = async function(url) {
+  const response = await axios.get(url);
+
+  return response.data;
+};
 
 const init = function(socket) {
   const savedSessions = getSessionsFile();
@@ -159,7 +293,7 @@ const init = function(socket) {
       socket.emit('init', savedSessions);
     } else {
       savedSessions.forEach(sess => {
-        createSession(sess.id, sess.description);
+        createSession(sess.id, sess.templateUrl);
       });
     }
   }
@@ -173,7 +307,7 @@ io.on('connection', function(socket) {
 
   socket.on('create-session', function(data) {
     console.log('Create session: ' + data.id);
-    createSession(data.id, data.description);
+    createSession(data.id, data.templateUrl);
   });
 });
 

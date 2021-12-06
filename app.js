@@ -192,7 +192,8 @@ const getTemplateData = async function(msg) {
 
 client
   .initialize()
-  .then(ss => {})
+  .then(ss => {
+    console.log("Success");})
   .catch(err => {
     console.log(err);
   });

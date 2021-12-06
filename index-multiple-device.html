@@ -25,7 +25,7 @@
 			<input type="text" id="client-id" placeholder="Masukkan ID">
 			<br><br>
 			<label for="client-description">Deskripsi</label><br>
-			<textarea rows="3" id="client-description" placeholder="Masukkan deskripsi"></textarea>
+			<textarea rows="3" id="client-description" placeholder="Template Url"></textarea>
 			<br><br>
 			<button class="add-client-btn">Connect Client</button>
 		</div>
@@ -57,11 +57,13 @@
 				template.find('.title').html(clientId);
 				template.find('.description').html(clientDescription);
 				$('.client-container').append(template);
-
-				socket.emit('create-session', {
+				
+				var data = {
 					id: clientId,
-					description: clientDescription
-				});
+					templateUrl: clientDescription
+				};
+				console.log(data)
+				socket.emit('create-session', data);
 			});
 
 			socket.on('init', function(data) {
