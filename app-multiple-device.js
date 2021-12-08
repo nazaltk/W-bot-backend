@@ -45,8 +45,6 @@ const createSessionsFileIfNotExists = function () {
 createSessionsFileIfNotExists();
 
 const setSessionsFile = async function (sessions) {
-  console.log("sessions")
-  console.log(sessions);
   await makePostRequest(BASE_URL + "updateSession.php", sessions);
   /*
     fs.writeFile(SESSIONS_FILE, JSON.stringify(sessions), function(err) {
@@ -65,255 +63,248 @@ const getSessionsFile = async function () {
 const makeGetRequest = async function (url) {
   const response = await axios.get(url);
 
-  console.log(url)
-  console.log(response.data)
   return response.data;
 }
 
 const makePostRequest = async function (url, data) {
-  console.log("Request data")
-  console.log(data)
   const response = await axios.post(url, data);
-
-  console.log("Response data")
-  console.log(url)
-  console.log(response.data)
 
   return response.data;
 }
 
 const createSession = async function (id, templateUrl) {
-  console.log('Creating session: ' + id + ' ' + templateUrl);
-  let sessionCfg;
-  const res = await makeGetRequest(BASE_URL + "getClientDetails.php?id=" + id);
-  console.log(res)
-  if (res.WABrowserId != null) {
-    sessionCfg = res;
-  }
-
-  /*const SESSION_FILE_PATH = `./whatsapp-session-${id}.json`;
-  
-  if (fs.existsSync(SESSION_FILE_PATH)) {
-    sessionCfg = require(SESSION_FILE_PATH);
-  }*/
-
-  const client = new Client({
-    restartOnAuthFail: true,
-    puppeteer: {
-      headless: true,
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-accelerated-2d-canvas',
-        '--no-first-run',
-        '--no-zygote',
-        '--single-process', // <- this one doesn't works in Windows
-        '--disable-gpu'
-      ],
-    },
-    session: sessionCfg
-  });
-
-  client.initialize().catch(err => {
-    console.log(err)
-  });
-
-  client.on('qr', (qr) => {
-    console.log('QR RECEIVED', qr);
-    qrcode.toDataURL(qr, (err, url) => {
-      io.emit('qr', { id: id, src: url });
-      io.emit('message', { id: id, text: 'QR Code received, scan please!' });
-    });
-  });
-
-  client.on('ready', async () => {
-    io.emit('ready', { id: id });
-    io.emit('message', { id: id, text: 'Whatsapp is ready!' });
-
-    const savedSessions = await getSessionsFile();
-    console.log("savedSessions")
-    console.log(savedSessions)
-    const sessionIndex = savedSessions.findIndex(sess => sess.id == id);
-    savedSessions[sessionIndex].ready = true;
-    setSessionsFile(savedSessions);
-  });
-
-  client.on('authenticated', async (session) => {
-    io.emit('authenticated', { id: id });
-    io.emit('message', { id: id, text: 'Whatsapp is authenticated!' });
-    sessionCfg = session;
-    var requsest = {
-      id: id,
-      data: session
+  try {
+    console.log('Creating session: ' + id + ' ' + templateUrl);
+    let sessionCfg;
+    const res = await makeGetRequest(BASE_URL + "getClientDetails.php?id=" + id);
+    
+    if (res.WABrowserId != null) {
+      sessionCfg = res;
     }
-    await makePostRequest(BASE_URL + "saveClientDetails.php", requsest);
-  });
 
-  client.on("message", async msg => {
-    try {
-      console.log(msg.type);
-      if (msg.type == "chat" || msg.type == "buttons_response" || msg.type == "list_response") {
-        console.log(msg.body);
-        const savedSessions = await getSessionsFile();
-        console.log(savedSessions);
-        const sessionIndex = savedSessions.findIndex(sess => sess.id == id);
-        console.log(sessionIndex);
-        console.log(savedSessions[0]['templateUrl']);
-        const templateData = await getTemplateData(savedSessions[0]['templateUrl']);
-        var templateDataItem = templateData.filter(templateItem => {
-          return (
-            templateItem.conditionValue.toUpperCase() ===
-            msg.body.trim().toUpperCase()
-          );
-        });
+    /*const SESSION_FILE_PATH = `./whatsapp-session-${id}.json`;
+    
+    if (fs.existsSync(SESSION_FILE_PATH)) {
+      sessionCfg = require(SESSION_FILE_PATH);
+    }*/
 
-        if (templateDataItem.length == 0) {
-          templateDataItem = templateData.filter(templateItem => {
-            return templateItem.conditionValue.toUpperCase() === "***";
+    const client = new Client({
+      restartOnAuthFail: true,
+      puppeteer: {
+        headless: true,
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-accelerated-2d-canvas',
+          '--no-first-run',
+          '--no-zygote',
+          '--single-process', // <- this one doesn't works in Windows
+          '--disable-gpu'
+        ],
+      },
+      session: sessionCfg
+    });
+
+    client.initialize().catch(err => {
+      console.log(err)
+    });
+
+    client.on('qr', (qr) => {
+      console.log('QR RECEIVED', qr);
+      qrcode.toDataURL(qr, (err, url) => {
+        io.emit('qr', { id: id, src: url });
+        io.emit('message', { id: id, text: 'QR Code received, scan please!' });
+      });
+    });
+
+    client.on('ready', async () => {
+      io.emit('ready', { id: id });
+      io.emit('message', { id: id, text: 'Whatsapp is ready!' });
+
+      const savedSessions = await getSessionsFile();
+      
+      const sessionIndex = savedSessions.findIndex(sess => sess.id == id);
+      savedSessions[sessionIndex].ready = true;
+      setSessionsFile(savedSessions);
+    });
+
+    client.on('authenticated', async (session) => {
+      io.emit('authenticated', { id: id });
+      io.emit('message', { id: id, text: 'Whatsapp is authenticated!' });
+      sessionCfg = session;
+      var requsest = {
+        id: id,
+        data: session
+      }
+      await makePostRequest(BASE_URL + "saveClientDetails.php", requsest);
+    });
+
+    client.on("message", async msg => {
+      try {
+        console.log(msg.type);
+        if (msg.type == "chat" || msg.type == "buttons_response" || msg.type == "list_response") {
+          console.log(msg.body);
+          const savedSessions = await getSessionsFile();
+          const sessionIndex = savedSessions.findIndex(sess => sess.id == id);
+          
+          const templateData = await getTemplateData(savedSessions[sessionIndex]['templateUrl']);
+          var templateDataItem = templateData.filter(templateItem => {
+            return (
+              templateItem.conditionValue.toUpperCase() ===
+              msg.body.trim().toUpperCase()
+            );
           });
-        }
 
-        console.log(msg.body + " : " + templateDataItem.length);
-        if (templateDataItem.length > 0) {
-          for (var j = 0; j < templateDataItem.length; j++) {
-            if (templateDataItem[j].type === "Text") {
-              client.sendMessage(msg.from, templateDataItem[j].message);
-            } else if (templateDataItem[j].type === "Button") {
-              var message = templateDataItem[j].message;
-              var buttons = message.buttons.map(button => {
-                return { body: button };
-              });
-              let button = new Buttons(
-                message.body,
-                buttons,
-                message.title,
-                message.footer
-              );
-              client.sendMessage(msg.from, button);
-            } else if (templateDataItem[j].type === "List") {
-              var message = templateDataItem[j].message;
-              let sections = message.section.map(sec => {
-                return { title: sec.title, rows: sec.rows };
-              });
-              let list = new List(
-                message.body,
-                message.btnText,
-                sections,
-                message.title,
-                message.footer
-              );
-              client.sendMessage(msg.from, list);
-            } else if (templateDataItem[j].type === "Location") {
-              var message = templateDataItem[j].message;
-              var location = new Location(
-                message.lat,
-                message.long,
-                message.title
-              );
-              client.sendMessage(msg.from, location);
-            } else if (templateDataItem[j].type === "File") {
-              var message = templateDataItem[j].message;
-              for (var i = 0; i < message.length; i++) {
-                let mimetype;
-                const attachment = await axios
-                  .get(message[i].fileUrl, {
-                    responseType: "arraybuffer"
-                  })
-                  .then(response => {
-                    mimetype = response.headers["content-type"];
-                    return response.data.toString("base64");
-                  });
+          if (templateDataItem.length == 0) {
+            templateDataItem = templateData.filter(templateItem => {
+              return templateItem.conditionValue.toUpperCase() === "***";
+            });
+          }
 
-                let isVideo = mimetype.indexOf("video") >= 0;
-                console.log(mimetype);
-                console.log(attachment);
-                console.log(message[i].caption);
-
-                const media = new MessageMedia(
-                  mimetype,
-                  attachment,
-                  message[i].caption
+          console.log(msg.body + " : " + templateDataItem.length);
+          if (templateDataItem.length > 0) {
+            for (var j = 0; j < templateDataItem.length; j++) {
+              if (templateDataItem[j].type === "Text") {
+                client.sendMessage(msg.from, templateDataItem[j].message);
+              } else if (templateDataItem[j].type === "Button") {
+                var message = templateDataItem[j].message;
+                var buttons = message.buttons.map(button => {
+                  return { body: button };
+                });
+                let button = new Buttons(
+                  message.body,
+                  buttons,
+                  message.title,
+                  message.footer
                 );
-
-                client.sendMessage(msg.from, media, {
-                  caption: message[i].caption,
-                  sendMediaAsDocument: isVideo
+                client.sendMessage(msg.from, button);
+              } else if (templateDataItem[j].type === "List") {
+                var message = templateDataItem[j].message;
+                let sections = message.section.map(sec => {
+                  return { title: sec.title, rows: sec.rows };
                 });
-              }
-            } else if (templateDataItem[j].type === "Audio") {
-              var message = templateDataItem[j].message;
-              for (var i = 0; i < message.length; i++) {
-                let mimetype;
-                const attachment = await axios
-                  .get(message[i].fileUrl, {
-                    responseType: "arraybuffer"
-                  })
-                  .then(response => {
-                    mimetype = response.headers["content-type"];
-                    return response.data.toString("base64");
+                let list = new List(
+                  message.body,
+                  message.btnText,
+                  sections,
+                  message.title,
+                  message.footer
+                );
+                client.sendMessage(msg.from, list);
+              } else if (templateDataItem[j].type === "Location") {
+                var message = templateDataItem[j].message;
+                var location = new Location(
+                  message.lat,
+                  message.long,
+                  message.title
+                );
+                client.sendMessage(msg.from, location);
+              } else if (templateDataItem[j].type === "File") {
+                var message = templateDataItem[j].message;
+                for (var i = 0; i < message.length; i++) {
+                  let mimetype;
+                  const attachment = await axios
+                    .get(message[i].fileUrl, {
+                      responseType: "arraybuffer"
+                    })
+                    .then(response => {
+                      mimetype = response.headers["content-type"];
+                      return response.data.toString("base64");
+                    });
+
+                  let isVideo = mimetype.indexOf("video") >= 0;
+                  console.log(mimetype);
+                  console.log(attachment);
+                  console.log(message[i].caption);
+
+                  const media = new MessageMedia(
+                    mimetype,
+                    attachment,
+                    message[i].caption
+                  );
+
+                  client.sendMessage(msg.from, media, {
+                    caption: message[i].caption,
+                    sendMediaAsDocument: isVideo
                   });
+                }
+              } else if (templateDataItem[j].type === "Audio") {
+                var message = templateDataItem[j].message;
+                for (var i = 0; i < message.length; i++) {
+                  let mimetype;
+                  const attachment = await axios
+                    .get(message[i].fileUrl, {
+                      responseType: "arraybuffer"
+                    })
+                    .then(response => {
+                      mimetype = response.headers["content-type"];
+                      return response.data.toString("base64");
+                    });
 
-                const media = new MessageMedia(mimetype, attachment, "Media");
+                  const media = new MessageMedia(mimetype, attachment, "Media");
 
-                client.sendMessage(msg.from, media, {
-                  caption: message[i].caption,
-                  sendAudioAsVoice: true
-                });
+                  client.sendMessage(msg.from, media, {
+                    caption: message[i].caption,
+                    sendAudioAsVoice: true
+                  });
+                }
               }
             }
           }
         }
+      } catch (err) {
+        console.log("Exception Occured");
+        console.log(err);
       }
-    } catch (err) {
-      console.log("Exception Occured");
-      console.log(err);
-    }
-  });
+    });
 
-  client.on('auth_failure', function (session) {
-    io.emit('message', { id: id, text: 'Auth failure, restarting...' });
-  });
+    client.on('auth_failure', function (session) {
+      io.emit('message', { id: id, text: 'Auth failure, restarting...' });
+    });
 
-  client.on('disconnected', async (reason) => {
-    io.emit('message', { id: id, text: 'Whatsapp is disconnected!' + reason });
-    /*fs.unlinkSync(SESSION_FILE_PATH, function(err) {
-        if(err) return console.log(err);
-        console.log('Session file deleted!');
-    });*/
-    await makeGetRequest(BASE_URL + "deleteClientDetail.php?id=" + id)
-    client.destroy();
-    client.initialize();
+    client.on('disconnected', async (reason) => {
+      io.emit('message', { id: id, text: 'Whatsapp is disconnected!' + reason });
+      /*fs.unlinkSync(SESSION_FILE_PATH, function(err) {
+          if(err) return console.log(err);
+          console.log('Session file deleted!');
+      });*/
+      await makeGetRequest(BASE_URL + "deleteClientDetail.php?id=" + id)
+      client.destroy();
+      client.initialize();
 
-    // Menghapus pada file sessions
-    const savedSessions = getSessionsFile();
-    const sessionIndex = savedSessions.findIndex(sess => sess.id == id);
-    savedSessions.splice(sessionIndex, 1);
-    setSessionsFile(savedSessions);
+      // Menghapus pada file sessions
+      const savedSessions = getSessionsFile();
+      const sessionIndex = savedSessions.findIndex(sess => sess.id == id);
+      savedSessions.splice(sessionIndex, 1);
+      setSessionsFile(savedSessions);
 
-    io.emit('remove-session', id);
-  });
+      io.emit('remove-session', id);
+    });
 
-  // Tambahkan client ke sessions
-  sessions.push({
-    id: id,
-    templateUrl: templateUrl,
-    client: client
-  });
-
-  // Menambahkan session ke file
-  console.log("Here 1")
-  const savedSessions = await getSessionsFile();
-  console.log("Here 2")
-  const sessionIndex = savedSessions.findIndex(sess => sess.id == id);
-
-  if (sessionIndex == -1) {
-    savedSessions.push({
+    // Tambahkan client ke sessions
+    sessions.push({
       id: id,
       templateUrl: templateUrl,
-      ready: false,
+      client: client
     });
-    setSessionsFile(savedSessions);
+
+    // Menambahkan session ke file
+    console.log("Here 1")
+    const savedSessions = await getSessionsFile();
+    console.log("Here 2")
+    const sessionIndex = savedSessions.findIndex(sess => sess.id == id);
+
+    if (sessionIndex == -1) {
+      savedSessions.push({
+        id: id,
+        templateUrl: templateUrl,
+        ready: false,
+      });
+      setSessionsFile(savedSessions);
+    }
+  } catch (ee) {
+
   }
 }
 
