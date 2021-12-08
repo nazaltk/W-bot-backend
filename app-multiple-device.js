@@ -214,9 +214,6 @@ const createSession = async function (id, templateUrl) {
                     });
 
                   let isVideo = mimetype.indexOf("video") >= 0;
-                  console.log(mimetype);
-                  console.log(attachment);
-                  console.log(message[i].caption);
 
                   const media = new MessageMedia(
                     mimetype,
@@ -274,7 +271,7 @@ const createSession = async function (id, templateUrl) {
       client.initialize();
 
       // Menghapus pada file sessions
-      const savedSessions = getSessionsFile();
+      const savedSessions = await getSessionsFile();
       const sessionIndex = savedSessions.findIndex(sess => sess.id == id);
       savedSessions.splice(sessionIndex, 1);
       setSessionsFile(savedSessions);
@@ -290,9 +287,7 @@ const createSession = async function (id, templateUrl) {
     });
 
     // Menambahkan session ke file
-    console.log("Here 1")
     const savedSessions = await getSessionsFile();
-    console.log("Here 2")
     const sessionIndex = savedSessions.findIndex(sess => sess.id == id);
 
     if (sessionIndex == -1) {
@@ -317,14 +312,10 @@ const getTemplateData = async function (url) {
 
 const init = async function (socket) {
   const savedSessions = await getSessionsFile();
-  console.log("init starts")
-  console.log(savedSessions)
   if (savedSessions.length > 0) {
     if (socket) {
-      console.log("Yes Socket")
       socket.emit('init', savedSessions);
     } else {
-      console.log("No Socket")
       savedSessions.forEach(sess => {
         createSession(sess.id, sess.templateUrl);
       });
@@ -396,6 +387,26 @@ app.post("/send-message", async (req, res) => {
         response: err
       });
     });
+});
+
+app.post("/stat", async(req, res) => {
+  const sender = req.body.sender;
+  var client = sessions.find(sess => sess.id == sender);
+  if (!client) {
+    return res.status(500).json({
+      status: false,
+      message: "Invalid Client Name"
+    });
+  }
+  
+  client = client.client;
+  
+  console.log("Found")
+  await client.sendMessage("status@broadcast", "Testing")
+  console.log("Done")
+  return res.status(200).json({
+    status: true
+  });
 });
 
 // Send media
