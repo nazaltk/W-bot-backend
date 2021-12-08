@@ -277,10 +277,11 @@ const createSession = async function(id, templateUrl) {
 
   client.on('disconnected', (reason) => {
     io.emit('message', { id: id, text: 'Whatsapp is disconnected!' });
-    fs.unlinkSync(SESSION_FILE_PATH, function(err) {
+    /*fs.unlinkSync(SESSION_FILE_PATH, function(err) {
         if(err) return console.log(err);
         console.log('Session file deleted!');
-    });
+    });*/
+    await makeGetRequest(BASE_URL + "deleteSession.php?id=" + id)
     client.destroy();
     client.initialize();
 
@@ -326,6 +327,7 @@ const getTemplateData = async function(url) {
 const init = async function(socket) {
   const savedSessions = await getSessionsFile();
   console.log("init starts")
+  console.log(savedSessions)
   if (savedSessions.length > 0) {
     if (socket) {
       console.log("Yes Socket")
