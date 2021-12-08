@@ -299,7 +299,8 @@ const createSession = async function (id, templateUrl) {
       setSessionsFile(savedSessions);
     }
   } catch (ee) {
-
+    console.log("Error Occured")
+    console.log(ee)
   }
 }
 
