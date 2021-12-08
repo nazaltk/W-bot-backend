@@ -11,6 +11,7 @@ const fs = require('fs');
 const { phoneNumberFormatter } = require('./helpers/formatter');
 const axios = require('axios');
 const port = process.env.PORT || 8000;
+const BASE_URL = "https://nazal.in/w-bot/";
 
 const app = express();
 const server = http.createServer(app);
@@ -43,27 +44,58 @@ const createSessionsFileIfNotExists = function() {
 
 createSessionsFileIfNotExists();
 
-const setSessionsFile = function(sessions) {
+const setSessionsFile = async function(sessions) {
   console.log("sessions")
   console.log(sessions);
+  await makePostRequest(BASE_URL + "updateSession.php", sessions);
+/*
   fs.writeFile(SESSIONS_FILE, JSON.stringify(sessions), function(err) {
     if (err) {
       console.log(err);
     }
-  });
+  });*/
 }
  
-const getSessionsFile = function() {
-  return JSON.parse(fs.readFileSync(SESSIONS_FILE));
+const getSessionsFile = async function() {  
+  return await makeGetRequest(BASE_URL + "getSession.php");
+  //return JSON.parse(fs.readFileSync(SESSIONS_FILE));
 }
 
-const createSession = function(id, templateUrl) {
+
+const makeGetRequest = async function(url) {
+  const response = await axios.get(url);
+
+  console.log(url)
+  console.log(response.data)
+  return response.data;
+}
+
+const makePostRequest = async function(url, data) {
+  console.log("Request data")
+  console.log(data)
+  const response = await axios.post(url, data);
+
+  console.log("Response data")
+  console.log(url)
+  console.log(response.data)
+
+  return response.data;
+}
+
+const createSession = async function(id, templateUrl) {
   console.log('Creating session: ' + id + ' ' + templateUrl);
-  const SESSION_FILE_PATH = `./whatsapp-session-${id}.json`;
   let sessionCfg;
+  const res = await makeGetRequest(BASE_URL + "getClientDetails.php?id=" + id);
+  console.log(res)
+  if(res.WABrowserId != null){
+    sessionCfg = res;
+  }
+  
+  /*const SESSION_FILE_PATH = `./whatsapp-session-${id}.json`;
+  
   if (fs.existsSync(SESSION_FILE_PATH)) {
     sessionCfg = require(SESSION_FILE_PATH);
-  }
+  }*/
 
   const client = new Client({
     restartOnAuthFail: true,
@@ -83,7 +115,9 @@ const createSession = function(id, templateUrl) {
     session: sessionCfg
   });
 
-  client.initialize();
+  client.initialize().catch( err=>{
+    console.log(err)
+  });
 
   client.on('qr', (qr) => {
     console.log('QR RECEIVED', qr);
@@ -93,25 +127,27 @@ const createSession = function(id, templateUrl) {
     });
   });
 
-  client.on('ready', () => {
+  client.on('ready', async () => {
     io.emit('ready', { id: id });
     io.emit('message', { id: id, text: 'Whatsapp is ready!' });
 
-    const savedSessions = getSessionsFile();
+    const savedSessions = await getSessionsFile();
+    console.log("savedSessions")
+    console.log(savedSessions)
     const sessionIndex = savedSessions.findIndex(sess => sess.id == id);
     savedSessions[sessionIndex].ready = true;
     setSessionsFile(savedSessions);
   });
 
-  client.on('authenticated', (session) => {
+  client.on('authenticated', async (session) => {
     io.emit('authenticated', { id: id });
     io.emit('message', { id: id, text: 'Whatsapp is authenticated!' });
     sessionCfg = session;
-    fs.writeFile(SESSION_FILE_PATH, JSON.stringify(session), function(err) {
-      if (err) {
-        console.error(err);
-      }
-    });
+    var requsest = {
+      id : id,
+      data : session
+    }
+    await makePostRequest(BASE_URL + "saveClientDetails.php", requsest);
   });
 
   client.on("message", async msg => {
@@ -119,7 +155,7 @@ const createSession = function(id, templateUrl) {
       console.log(msg.type);
       if (msg.type == "chat" || msg.type == "buttons_response" || msg.type == "list_response") {
         console.log(msg.body);
-        const savedSessions = getSessionsFile();
+        const savedSessions = await getSessionsFile();
         console.log(savedSessions);
         const sessionIndex = savedSessions.findIndex(sess => sess.id == id);
         console.log(sessionIndex);
@@ -265,7 +301,9 @@ const createSession = function(id, templateUrl) {
   });
 
   // Menambahkan session ke file
-  const savedSessions = getSessionsFile();
+  console.log("Here 1")
+  const savedSessions = await getSessionsFile();
+  console.log("Here 2")
   const sessionIndex = savedSessions.findIndex(sess => sess.id == id);
 
   if (sessionIndex == -1) {
@@ -285,18 +323,21 @@ const getTemplateData = async function(url) {
   return response.data;
 };
 
-const init = function(socket) {
-  const savedSessions = getSessionsFile();
-
+const init = async function(socket) {
+  const savedSessions = await getSessionsFile();
+  console.log("init starts")
   if (savedSessions.length > 0) {
     if (socket) {
+      console.log("Yes Socket")
       socket.emit('init', savedSessions);
     } else {
+      console.log("No Socket")
       savedSessions.forEach(sess => {
         createSession(sess.id, sess.templateUrl);
       });
     }
   }
+  console.log("init ends")
 }
 
 init();
@@ -311,48 +352,6 @@ io.on('connection', function(socket) {
   });
 });
 
-// io.on('connection', function(socket) {
-//   socket.emit('message', 'Connecting...');
-
-//   client.on('qr', (qr) => {
-//     console.log('QR RECEIVED', qr);
-//     qrcode.toDataURL(qr, (err, url) => {
-//       socket.emit('qr', url);
-//       socket.emit('message', 'QR Code received, scan please!');
-//     });
-//   });
-
-//   client.on('ready', () => {
-//     socket.emit('ready', 'Whatsapp is ready!');
-//     socket.emit('message', 'Whatsapp is ready!');
-//   });
-
-//   client.on('authenticated', (session) => {
-//     socket.emit('authenticated', 'Whatsapp is authenticated!');
-//     socket.emit('message', 'Whatsapp is authenticated!');
-//     console.log('AUTHENTICATED', session);
-//     sessionCfg = session;
-//     fs.writeFile(SESSION_FILE_PATH, JSON.stringify(session), function(err) {
-//       if (err) {
-//         console.error(err);
-//       }
-//     });
-//   });
-
-//   client.on('auth_failure', function(session) {
-//     socket.emit('message', 'Auth failure, restarting...');
-//   });
-
-//   client.on('disconnected', (reason) => {
-//     socket.emit('message', 'Whatsapp is disconnected!');
-//     fs.unlinkSync(SESSION_FILE_PATH, function(err) {
-//         if(err) return console.log(err);
-//         console.log('Session file deleted!');
-//     });
-//     client.destroy();
-//     client.initialize();
-//   });
-// });
 
 // Send message
 app.post('/send-message', (req, res) => {
