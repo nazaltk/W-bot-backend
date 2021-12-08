@@ -275,8 +275,8 @@ const createSession = async function(id, templateUrl) {
     io.emit('message', { id: id, text: 'Auth failure, restarting...' });
   });
 
-  client.on('disconnected', (reason) => {
-    io.emit('message', { id: id, text: 'Whatsapp is disconnected!' });
+  client.on('disconnected', async (reason) => {
+    io.emit('message', { id: id, text: 'Whatsapp is disconnected!' + reason });
     /*fs.unlinkSync(SESSION_FILE_PATH, function(err) {
         if(err) return console.log(err);
         console.log('Session file deleted!');
