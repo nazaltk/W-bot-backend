@@ -31,12 +31,12 @@ app.get('/', (req, res) => {
 const sessions = [];
 const SESSIONS_FILE = './whatsapp-sessions.json';
 
-const createSessionsFileIfNotExists = function() {
+const createSessionsFileIfNotExists = function () {
   if (!fs.existsSync(SESSIONS_FILE)) {
     try {
       fs.writeFileSync(SESSIONS_FILE, JSON.stringify([]));
       console.log('Sessions file created successfully.');
-    } catch(err) {
+    } catch (err) {
       console.log('Failed to create sessions file: ', err);
     }
   }
@@ -44,25 +44,25 @@ const createSessionsFileIfNotExists = function() {
 
 createSessionsFileIfNotExists();
 
-const setSessionsFile = async function(sessions) {
+const setSessionsFile = async function (sessions) {
   console.log("sessions")
   console.log(sessions);
   await makePostRequest(BASE_URL + "updateSession.php", sessions);
-/*
-  fs.writeFile(SESSIONS_FILE, JSON.stringify(sessions), function(err) {
-    if (err) {
-      console.log(err);
-    }
-  });*/
+  /*
+    fs.writeFile(SESSIONS_FILE, JSON.stringify(sessions), function(err) {
+      if (err) {
+        console.log(err);
+      }
+    });*/
 }
- 
-const getSessionsFile = async function() {  
+
+const getSessionsFile = async function () {
   return await makeGetRequest(BASE_URL + "getSession.php");
   //return JSON.parse(fs.readFileSync(SESSIONS_FILE));
 }
 
 
-const makeGetRequest = async function(url) {
+const makeGetRequest = async function (url) {
   const response = await axios.get(url);
 
   console.log(url)
@@ -70,7 +70,7 @@ const makeGetRequest = async function(url) {
   return response.data;
 }
 
-const makePostRequest = async function(url, data) {
+const makePostRequest = async function (url, data) {
   console.log("Request data")
   console.log(data)
   const response = await axios.post(url, data);
@@ -82,15 +82,15 @@ const makePostRequest = async function(url, data) {
   return response.data;
 }
 
-const createSession = async function(id, templateUrl) {
+const createSession = async function (id, templateUrl) {
   console.log('Creating session: ' + id + ' ' + templateUrl);
   let sessionCfg;
   const res = await makeGetRequest(BASE_URL + "getClientDetails.php?id=" + id);
   console.log(res)
-  if(res.WABrowserId != null){
+  if (res.WABrowserId != null) {
     sessionCfg = res;
   }
-  
+
   /*const SESSION_FILE_PATH = `./whatsapp-session-${id}.json`;
   
   if (fs.existsSync(SESSION_FILE_PATH)) {
@@ -115,7 +115,7 @@ const createSession = async function(id, templateUrl) {
     session: sessionCfg
   });
 
-  client.initialize().catch( err=>{
+  client.initialize().catch(err => {
     console.log(err)
   });
 
@@ -144,8 +144,8 @@ const createSession = async function(id, templateUrl) {
     io.emit('message', { id: id, text: 'Whatsapp is authenticated!' });
     sessionCfg = session;
     var requsest = {
-      id : id,
-      data : session
+      id: id,
+      data: session
     }
     await makePostRequest(BASE_URL + "saveClientDetails.php", requsest);
   });
@@ -167,13 +167,13 @@ const createSession = async function(id, templateUrl) {
             msg.body.trim().toUpperCase()
           );
         });
-  
+
         if (templateDataItem.length == 0) {
           templateDataItem = templateData.filter(templateItem => {
             return templateItem.conditionValue.toUpperCase() === "***";
           });
         }
-  
+
         console.log(msg.body + " : " + templateDataItem.length);
         if (templateDataItem.length > 0) {
           for (var j = 0; j < templateDataItem.length; j++) {
@@ -224,18 +224,18 @@ const createSession = async function(id, templateUrl) {
                     mimetype = response.headers["content-type"];
                     return response.data.toString("base64");
                   });
-  
+
                 let isVideo = mimetype.indexOf("video") >= 0;
                 console.log(mimetype);
                 console.log(attachment);
                 console.log(message[i].caption);
-  
+
                 const media = new MessageMedia(
                   mimetype,
                   attachment,
                   message[i].caption
                 );
-  
+
                 client.sendMessage(msg.from, media, {
                   caption: message[i].caption,
                   sendMediaAsDocument: isVideo
@@ -253,9 +253,9 @@ const createSession = async function(id, templateUrl) {
                     mimetype = response.headers["content-type"];
                     return response.data.toString("base64");
                   });
-  
+
                 const media = new MessageMedia(mimetype, attachment, "Media");
-  
+
                 client.sendMessage(msg.from, media, {
                   caption: message[i].caption,
                   sendAudioAsVoice: true
@@ -271,7 +271,7 @@ const createSession = async function(id, templateUrl) {
     }
   });
 
-  client.on('auth_failure', function(session) {
+  client.on('auth_failure', function (session) {
     io.emit('message', { id: id, text: 'Auth failure, restarting...' });
   });
 
@@ -281,7 +281,7 @@ const createSession = async function(id, templateUrl) {
         if(err) return console.log(err);
         console.log('Session file deleted!');
     });*/
-    await makeGetRequest(BASE_URL + "deleteSession.php?id=" + id)
+    await makeGetRequest(BASE_URL + "deleteClientDetail.php?id=" + id)
     client.destroy();
     client.initialize();
 
@@ -317,14 +317,14 @@ const createSession = async function(id, templateUrl) {
   }
 }
 
-  
-const getTemplateData = async function(url) {
+
+const getTemplateData = async function (url) {
   const response = await axios.get(url);
 
   return response.data;
 };
 
-const init = async function(socket) {
+const init = async function (socket) {
   const savedSessions = await getSessionsFile();
   console.log("init starts")
   console.log(savedSessions)
@@ -345,38 +345,152 @@ const init = async function(socket) {
 init();
 
 // Socket IO
-io.on('connection', function(socket) {
+io.on('connection', function (socket) {
   init(socket);
 
-  socket.on('create-session', function(data) {
+  socket.on('create-session', function (data) {
     console.log('Create session: ' + data.id);
     createSession(data.id, data.templateUrl);
   });
+
 });
+
+const checkRegisteredNumber = async function (clientHere, number) {
+  const isRegistered = await clientHere.isRegisteredUser(number);
+  return isRegistered;
+};
 
 
 // Send message
-app.post('/send-message', (req, res) => {
-  const sender = req.body.sender;
-  const number = phoneNumberFormatter(req.body.number);
-  const message = req.body.message;
-  console.log(req.body)
-  const client = sessions.find(sess => sess.id == sender).client;
-  console.log(client)
-  
-  client.sendMessage(number, message).then(response => {
-    res.status(200).json({
-      status: true,
-      response: response
-    });
-  }).catch(err => {
-    res.status(500).json({
+app.post("/send-message", async (req, res) => {
+  console.log(req.body);
+  if (!req.body.sender || !req.body.number || !req.body.message) {
+    return res.status(500).json({
       status: false,
-      response: err
+      message: "Invalid Input"
     });
+  }
+  const sender = req.body.sender;
+  const number = phoneNumberFormatter(req.body.number + "");
+  const message = req.body.message;
+  var client = sessions.find(sess => sess.id == sender);
+  if (!client) {
+    return res.status(500).json({
+      status: false,
+      message: "Invalid Client Name"
+    });
+  }
+  client = client.client;
+
+  const isRegisteredNumber = await checkRegisteredNumber(client, number);
+
+  if (!isRegisteredNumber) {
+    return res.status(200).json({
+      status: false,
+      message: "The number is not registered"
+    });
+  }
+
+  client
+    .sendMessage(number, message)
+    .then(response => {
+      res.status(200).json({
+        status: true,
+        response: response
+      });
+    })
+    .catch(err => {
+      res.status(500).json({
+        status: false,
+        response: err
+      });
+    });
+});
+
+// Send media
+app.post("/send-media", async (req, res) => {
+  console.log(req.body);
+  if (
+    !req.body.sender ||
+    !req.body.number ||
+    !req.body.caption ||
+    !req.body.file ||
+    !req.body.file
+  ) {
+    return res.status(500).json({
+      status: false,
+      message: "Invalid Input"
+    });
+  }
+
+  const sender = req.body.sender;
+  var client = sessions.find(sess => sess.id == sender);
+  if (!client) {
+    return res.status(500).json({
+      status: false,
+      message: "Invalid Client Name"
+    });
+  }
+  client = client.client;
+  const number = phoneNumberFormatter(req.body.number + "");
+  const caption = req.body.caption;
+  const fileUrl = req.body.file;
+  const isAudio = req.body.audio;
+  const isVideo = req.body.video;
+
+  const isRegisteredNumber = await checkRegisteredNumber(client, number);
+
+  if (!isRegisteredNumber) {
+    return res.status(200).json({
+      status: false,
+      message: "The number is not registered"
+    });
+  }
+
+
+  // const media = MessageMedia.fromFilePath('./image-example.png');
+  // const file = req.files.file;
+  // const media = new MessageMedia(file.mimetype, file.data.toString('base64'), file.name);
+  let mimetype;
+  const attachment = await axios
+    .get(fileUrl, {
+      responseType: "arraybuffer"
+    })
+    .then(response => {
+      mimetype = response.headers["content-type"];
+      return response.data.toString("base64");
+    });
+
+  const media = new MessageMedia(mimetype, attachment, "Media");
+
+  client
+    .sendMessage(number, media, {
+      caption: caption,
+      sendAudioAsVoice: isAudio,
+      sendMediaAsDocument: isVideo
+    })
+    .then(response => {
+      res.status(200).json({
+        status: true,
+        response: response
+      });
+    })
+    .catch(err => {
+      res.status(500).json({
+        status: false,
+        response: err
+      });
+    });
+});
+
+// Send media
+app.get("/status", async (req, res) => {
+  return res.status(200).json({
+    status: true,
+    message: "Running"
   });
 });
 
-server.listen(port, function() {
+server.listen(port, function () {
   console.log('App running on *: ' + port);
 });
