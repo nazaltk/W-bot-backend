@@ -15,9 +15,10 @@ const { phoneNumberFormatter } = require("./helpers/formatter");
 const fileUpload = require("express-fileupload");
 const axios = require("axios");
 const mime = require("mime-types");
-
-const TEMPLATE_URL = process.env.TEMPLATE_URL;
-const port = process.env.PORT || 8000;
+var config = require('./config');
+console.log(config);
+const TEMPLATE_URL = config.url;
+const port = process.env.PORT || config.port;
 
 const app = express();
 const server = http.createServer(app);
@@ -53,6 +54,7 @@ app.get("/", (req, res) => {
 const client = new Client({
   restartOnAuthFail: true,
   puppeteer: {
+    executablePath: 'C:/Program Files/Google/Chrome/Application/chrome.exe',
     headless: true,
     args: [
       "--no-sandbox",
@@ -71,7 +73,7 @@ client.setMaxListeners(0);
 
 client.on("message", async msg => {
   try {
-    if (msg.type == "chat" || msg.type == "buttons_response") {
+    if (msg.type == "chat" || msg.type == "buttons_response" || msg.type == "list_response") {
       console.log(msg.body);
       const templateData = await getTemplateData(msg);
       var templateDataItem = templateData.filter(templateItem => {
@@ -252,6 +254,7 @@ app.post(
   "/send-message",
   [body("number").notEmpty(), body("message").notEmpty()],
   async (req, res) => {
+try{
     console.log(req.body);
     if (!req.body.number || !req.body.message) {
       return res.status(200).json({
@@ -297,11 +300,15 @@ app.post(
           response: err
         });
       });
+}catch(e){
+	console.log(e)
+}
   }
 );
 
 // Send media
 app.post("/send-media", async (req, res) => {
+try{
   console.log(req.body);
   if (
     !req.body.number ||
@@ -354,6 +361,9 @@ app.post("/send-media", async (req, res) => {
         response: err
       });
     });
+}catch(e){
+	console.log(e)
+}
 });
 
 const findGroupByName = async function(name) {
